@@ -175,17 +175,78 @@ CREATE TABLE IF NOT EXISTS public.entries (
         $("#entriesTable tbody").on("click",".remove-entry",function(){const entryId=$(this).closest("tr").data("id");removerLancamento(entryId)});function preencherFiltrosAnoMes(){const anosUnicos=[...new Set(entries.map((entry)=>moment(entry.data,"YYYY-MM-DD").year()))].sort((a,b)=>b-a);const mesesUnicos=[...new Set(entries.map((entry)=>String(moment(entry.data,"YYYY-MM-DD").month()+1).padStart(2,"0")))].sort();const filterAnoValue=$("#filterAno").val()||currentYear;const filterMesValue=$("#filterMes").val()||currentMonth;const overviewAnoValue=$("#overviewAno").val()||currentYear;const overviewMesValue=$("#overviewMes").val();const filterAno=$("#filterAno").empty().append('<option value="">Todos</option>');anosUnicos.forEach((ano)=>{filterAno.append(`<option value="${ano}">${ano}</option>`)});$("#filterAno").val(filterAnoValue);const filterMes=$("#filterMes").empty().append('<option value="">Todos</option>');mesesUnicos.forEach((mes)=>{filterMes.append(`<option value="${mes}">${obterNomeMes(mes)}</option>`)});$("#filterMes").val(filterMesValue);const overviewAno=$("#overviewAno").empty();anosUnicos.forEach((ano)=>{overviewAno.append(`<option value="${ano}">${ano}</option>`)});$("#overviewAno").val(overviewAnoValue);const overviewMes=$("#overviewMes").empty().append('<option value="">Todos</option>');mesesUnicos.forEach((mes)=>{overviewMes.append(`<option value="${mes}">${obterNomeMes(mes)}</option>`)});$("#overviewMes").val(overviewMesValue)}
         function obterNomeMes(mesNumero){const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];return meses[parseInt(mesNumero,10)-1]}
         function ordenarLancamentos(){entries.sort((a,b)=>new Date(b.data)-new Date(a.data))}
-        function atualizarTabela(){const tbody=$("#entriesTable tbody");tbody.empty();let displayEntries=entries.slice();const tipoFiltro=$("#filterTipo").val();const categoriaFiltro=$("#filterCategoria").val();const anoFiltro=$("#filterAno").val();const mesFiltro=$("#filterMes").val();const descricaoFiltro=$("#filterDescricao").val().toLowerCase();if(tipoFiltro)displayEntries=displayEntries.filter((entry)=>entry.tipo===tipoFiltro);if(categoriaFiltro)displayEntries=displayEntries.filter((entry)=>entry.categoria===categoriaFiltro);if(anoFiltro)displayEntries=displayEntries.filter((entry)=>moment(entry.data,"YYYY-MM-DD").year()===parseInt(anoFiltro));if(mesFiltro)displayEntries=displayEntries.filter((entry)=>String(moment(entry.data,"YYYY-MM-DD").month()+1).padStart(2,"0")===mesFiltro);if(descricaoFiltro)displayEntries=displayEntries.filter((entry)=>entry.descricao.toLowerCase().includes(descricaoFiltro));filteredEntries=displayEntries;atualizarTotaisFiltrados();const totalPages=Math.ceil(filteredEntries.length/itemsPerPage);if(currentPage>totalPages)currentPage=totalPages>0?totalPages:1;const start=(currentPage-1)*itemsPerPage;const paginatedEntries=filteredEntries.slice(start,start+itemsPerPage);if(paginatedEntries.length===0){tbody.append(`<tr><td colspan="6" class="text-center">Nenhum lançamento encontrado.</td></tr>`)}else{paginatedEntries.forEach((entry)=>{const rowClass=entry.tipo.toLowerCase();const formattedDate=formatDate(entry.data);const badgeClass=entry.tipo==='Receita'?'receita':entry.tipo==='Despesa'?'despesa':'investimento';const row=$(`<tr class="${rowClass}" data-id="${entry.id}">
-            <td>${formattedDate}</td>
-            <td><span class="badge custom-badge badge-${badgeClass}">${entry.tipo}</span></td>
-            <td>${entry.categoria}</td>
-            <td>${entry.descricao}</td>
-            <td>R$ ${entry.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-            <td class="text-center align-middle">
-                <i class="fas fa-edit text-primary edit-entry me-2" style="cursor: pointer;" title="Editar"></i>
-                <i class="fas fa-trash-alt text-danger remove-entry" style="cursor: pointer;" title="Remover"></i>
-            </td>
-        </tr>`);if(entry.id===lastEditedRowId){row.addClass("editar-linha pulse");setTimeout(()=>{row.removeClass("editar-linha pulse")},5000)}
+        function atualizarTabela() {
+        const tbody = $("#entriesTable tbody");
+        tbody.empty();
+    
+        let displayEntries = entries.slice();
+        const tipoFiltro = $("#filterTipo").val();
+        const categoriaFiltro = $("#filterCategoria").val();
+        const anoFiltro = $("#filterAno").val();
+        const mesFiltro = $("#filterMes").val();
+        const descricaoFiltro = $("#filterDescricao").val().toLowerCase();
+    
+        if (tipoFiltro) {
+            displayEntries = displayEntries.filter(entry => entry.tipo === tipoFiltro);
+        }
+        if (categoriaFiltro) {
+            displayEntries = displayEntries.filter(entry => entry.categoria === categoriaFiltro);
+        }
+        if (anoFiltro) {
+            displayEntries = displayEntries.filter(entry => moment(entry.data, "YYYY-MM-DD").year() === parseInt(anoFiltro));
+        }
+        if (mesFiltro) {
+            displayEntries = displayEntries.filter(entry => String(moment(entry.data, "YYYY-MM-DD").month() + 1).padStart(2, "0") === mesFiltro);
+        }
+        if (descricaoFiltro) {
+            displayEntries = displayEntries.filter(entry => entry.descricao.toLowerCase().includes(descricaoFiltro));
+        }
+    
+        filteredEntries = displayEntries;
+        atualizarTotaisFiltrados();
+    
+        const totalPages = Math.ceil(filteredEntries.length / itemsPerPage);
+        if (currentPage > totalPages) {
+            currentPage = totalPages > 0 ? totalPages : 1;
+        }
+    
+        const start = (currentPage - 1) * itemsPerPage;
+        const paginatedEntries = filteredEntries.slice(start, start + itemsPerPage);
+    
+        if (paginatedEntries.length === 0) {
+            tbody.append(`<tr><td colspan="6" class="text-center">Nenhum lançamento encontrado.</td></tr>`);
+        } else {
+            paginatedEntries.forEach(entry => {
+                const rowClass = entry.tipo.toLowerCase();
+                const formattedDate = formatDate(entry.data);
+                const badgeClass = entry.tipo === 'Receita' ? 'receita' : entry.tipo === 'Despesa' ? 'despesa' : 'investimento';
+    
+                let valorStyle = '';
+                let PrefixValue = '';
+    
+                if (entry.tipo === 'Despesa') {
+                   PrefixValue = `-`;
+                    valorStyle = 'color: #dc3545;';
+                } else if (entry.tipo === 'Receita') {
+                    valorStyle = 'color: #28a745;';
+                } else if (entry.tipo === 'Investimento') {
+                    valorStyle = 'color: #6ec1e4;';
+                }
+    
+                const row = $(`
+                    <tr class="${rowClass}" data-id="${entry.id}">
+                        <td>${formattedDate}</td>
+                        <td><span class="badge custom-badge badge-${badgeClass}">${entry.tipo}</span></td>
+                        <td>${entry.categoria}</td>
+                        <td>${entry.descricao}</td>
+                        <td style="${valorStyle}">${PrefixValue}R$ ${entry.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                        <td class="text-center align-middle">
+                            <i class="fas fa-edit text-primary edit-entry me-2" style="cursor: pointer;" title="Editar"></i>
+                            <i class="fas fa-trash-alt text-danger remove-entry" style="cursor: pointer;" title="Remover"></i>
+                        </td>
+                    </tr>
+                `);
+        if(entry.id===lastEditedRowId){row.addClass("editar-linha pulse");setTimeout(()=>{row.removeClass("editar-linha pulse")},5000)}
         tbody.append(row)})}
         atualizarPaginacao()}
         $("#aplicarFiltros").click(function(){currentPage=1;atualizarTabela();renderHighlightedCategoriesScroller()});$("#limparFiltros").click(function(){$("#filtersForm")[0].reset();$("#filterAno").val(currentYear);$("#filterMes").val(currentMonth);currentPage=1;atualizarTabela();renderHighlightedCategoriesScroller()});$("#aplicarFiltrosOverview").click(function(){aplicarFiltrosOverview()});function aplicarFiltrosOverview(){const tipo=$("#overviewTipo").val();const anoSelecionado=parseInt($("#overviewAno").val());const mesSelecionado=$("#overviewMes").val();const filtered=entries.filter((entry)=>{const entryDate=moment(entry.data,"YYYY-MM-DD");const entryYear=entryDate.year();const entryMonth=String(entryDate.month()+1).padStart(2,"0");const matchTipo=tipo?entry.tipo===tipo:!0;const matchAno=anoSelecionado?entryYear===anoSelecionado:!0;const matchMes=mesSelecionado?entryMonth===mesSelecionado:!0;return matchTipo&&matchAno&&matchMes});if(filtered.length===0){$("#graficoReceitasDespesasInvestimentos").replaceWith('<p id="graficoReceitasDespesasInvestimentos" class="text-center mt-4">Não há dados para o período selecionado.</p>');$("#graficoCategorias").replaceWith('<p id="graficoCategorias" class="text-center mt-4">Não há dados para o período selecionado.</p>');$("#graficoMensal").replaceWith('<p id="graficoMensal" class="text-center mt-4">Não há dados para o período selecionado.</p>')}else{if($("#graficoReceitasDespesasInvestimentos").prop("tagName")!=="CANVAS"){$("#graficoReceitasDespesasInvestimentos").replaceWith('<canvas id="graficoReceitasDespesasInvestimentos"></canvas>')}
